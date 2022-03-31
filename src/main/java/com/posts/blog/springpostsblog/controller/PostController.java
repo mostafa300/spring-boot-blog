@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.posts.blog.springpostsblog.payload.PostDto;
 import com.posts.blog.springpostsblog.service.PostService;
@@ -29,13 +30,16 @@ public class PostController {
 	}
 	
 	
+	
 	// create blog post 
+	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping
 	public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto){
 		return new ResponseEntity<PostDto>(postservice.createPost(postDto),HttpStatus.CREATED);
 	}
 	
 	// Get All Requests 
+	//@PreAuthorize("hasRole('USER')")
 	@GetMapping
 	public List<PostDto> getAllPosts(){
 		return postservice.getAllPosts();
