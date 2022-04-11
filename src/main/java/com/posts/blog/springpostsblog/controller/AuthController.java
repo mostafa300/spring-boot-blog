@@ -9,20 +9,26 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import com.posts.blog.springpostsblog.model.Role;
 import com.posts.blog.springpostsblog.model.User;
+import com.posts.blog.springpostsblog.payload.JWTAuthResponse;
 import com.posts.blog.springpostsblog.payload.LoginDto;
+import com.posts.blog.springpostsblog.payload.PostDto;
 import com.posts.blog.springpostsblog.payload.SignUpDto;
 import com.posts.blog.springpostsblog.repository.RoleRepository;
 
 import com.posts.blog.springpostsblog.repository.UserRepository;
+import com.posts.blog.springpostsblog.security.JwtTokenProvider;
 
 import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,17 +43,24 @@ public class AuthController {
 	private RoleRepository roleRepository ;
 	
 	@Autowired
-	private PasswordEncoder PasswordEncoder ; 
+	private PasswordEncoder PasswordEncoder ;
+	
+	@Autowired
+    private JwtTokenProvider tokenProvider;
 	
     // Login
 	@PostMapping("/signin")
-    public ResponseEntity<String> authenticateUser(@RequestBody LoginDto loginDto){
+    public ResponseEntity<JWTAuthResponse> authenticateUser(@RequestBody LoginDto loginDto){
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 loginDto.getUsernameOrEmail(), loginDto.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        
+        // get token form tokenProvider
+        String token = tokenProvider.generateToken(authentication);
 
-        return new ResponseEntity<>("User Login done",HttpStatus.OK);
+        return ResponseEntity.ok(new JWTAuthResponse(token));
+        //return new ResponseEntity<>("User Login done",HttpStatus.OK);
     }
 	
 	// SingUp
@@ -72,6 +85,19 @@ public class AuthController {
 		
 		userRepository.save(user);
 		return new ResponseEntity<>("User registered successfully", HttpStatus.OK);
+	}
+	
+	@GetMapping("/gethello")
+	public String getHello() {
+		return "Hello Mostafa" ;
+	}
+ 
+	@GetMapping("/consume")
+	public String consume(){
+		String url = "http://localhost:8080/api/auth/gethello";
+		RestTemplate restTemplate = new RestTemplate();
+		String result = restTemplate.getForObject(url, String.class);
+		return result ;
 	}
 	
 }
